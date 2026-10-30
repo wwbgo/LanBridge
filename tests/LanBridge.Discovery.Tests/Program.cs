@@ -16,7 +16,13 @@ internal static class Program
             return 0;
         }
         if (args.Length > 0 && args[0] == "--echo") { Console.Out.Write(args[1]); Console.Error.Write("diagnostic"); }
-        if (args.Length > 0 && args[0] == "--flood") { var text = new string('é', 600_000); if (args[1] == "stderr") Console.Error.Write(text); else Console.Out.Write(text); }
+        if (args.Length > 0 && args[0] == "--flood")
+        {
+            // Write a known byte count, independent of the runner's OEM console code page.
+            var bytes = System.Text.Encoding.UTF8.GetBytes(new string('é', 600_000));
+            using var output = args[1] == "stderr" ? Console.OpenStandardError() : Console.OpenStandardOutput();
+            output.Write(bytes);
+        }
         if (args.Length > 0 && args[0] == "--utf16") { var bytes = System.Text.Encoding.Unicode.GetBytes("Ubuntu 开发\r\n"); using var output = Console.OpenStandardOutput(); output.Write(bytes); }
         if (args.Length > 0 && args[0] == "--wait") { File.WriteAllText(args[1], Environment.ProcessId.ToString()); Thread.Sleep(30000); }
         return 0;

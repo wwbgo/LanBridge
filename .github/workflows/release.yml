@@ -80,8 +80,7 @@ jobs:
             $_ | Out-String | Tee-Object -FilePath artifacts/build.log -Append | Write-Host
           }
           if ($buildFailed) {
-            $diagnostics = @(Get-Content artifacts/build.log | Where-Object { $_ -match 'error |Failed|失败|Exception|Expected|Actual|at .*line|:line ' } | Select-Object -Last 30)
-            if ($diagnostics.Count -eq 0) { $diagnostics = @(Get-Content artifacts/build.log | Select-Object -Last 20) }
+            $diagnostics = @(Get-Content artifacts/build.log | Select-Object -Last 60)
             foreach ($line in $diagnostics) {
               $escaped = $line.Replace('%', '%25').Replace("`r", '%0D').Replace("`n", '%0A')
               Write-Output "::error::$escaped"
