@@ -1,0 +1,1 @@
+[{"Name":"podman-machine-default","URI":"ssh://user@127.0.0.1:51048/run/user/1000/podman/podman.sock","IsMachine":true,"Default":true},{"Name":"other","URI":"ssh://user@10.0.0.5:5555/run/podman.sock","IsMachine":true,"Default":false}]

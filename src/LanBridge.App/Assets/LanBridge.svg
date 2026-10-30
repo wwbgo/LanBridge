@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">LanBridge</title>
+  <desc id="desc">A pale bridge links two teal network sockets on a rounded blue tile.</desc>
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1" gradientUnits="objectBoundingBox">
+      <stop stop-color="#123956"/><stop offset="1" stop-color="#1262a0"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#tile)"/>
+  <g fill="none" stroke="#edfbff" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 64,144 C 82,66 174,66 192,144" stroke-width="20"/>
+    <path d="M 64,144 H 192 M 80,139 V 176 M 176,139 V 176" stroke-width="16"/>
+  </g>
+  <g fill="#5ef0d0">
+    <circle cx="56" cy="144" r="20"/><circle cx="200" cy="144" r="20"/>
+  </g>
+  <g fill="#12465d">
+    <circle cx="56" cy="144" r="7"/><circle cx="200" cy="144" r="7"/>
+  </g>
+</svg>

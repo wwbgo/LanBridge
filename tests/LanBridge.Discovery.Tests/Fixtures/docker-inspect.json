@@ -1,0 +1,1 @@
+{"8080/tcp":[{"HostIp":"0.0.0.0","HostPort":"18080"},{"HostIp":"127.0.0.1","HostPort":"18081"}],"5353/udp":[{"HostIp":"::","HostPort":"5353"}],"9000/tcp":null}

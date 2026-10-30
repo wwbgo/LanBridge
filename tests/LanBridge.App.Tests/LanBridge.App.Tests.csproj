@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+  <ItemGroup><Compile Include="../../src/LanBridge.App/UiPresentation.cs" Link="UiPresentation.cs" /><Compile Include="../../src/LanBridge.App/HostLauncher.cs" Link="HostLauncher.cs" /><Compile Include="../../src/LanBridge.App/Updates.cs" Link="Updates.cs" /></ItemGroup>
+  <ItemGroup><Content Include="../../src/LanBridge.App/MainWindow.cs" Link="MainWindow.source.cs" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
+  <ItemGroup><ProjectReference Include="../../src/LanBridge.Core/LanBridge.Core.csproj" /></ItemGroup>
+  <ItemGroup><Content Include="../../src/LanBridge.App/SystemTheme.cs" Condition="Exists('../../src/LanBridge.App/SystemTheme.cs')" Link="SystemTheme.source.cs" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
+</Project>

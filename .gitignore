@@ -1,0 +1,24 @@
+**/bin/
+**/obj/
+.vs/
+artifacts/
+TestResults/
+*.user
+*.suo
+*.log
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local credentials and private state
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.key
+.hermes/
+
+# Historical local test transcripts (not fixtures)
+tests/LanBridge.Core.Tests/core-*.txt
+tests/LanBridge.Core.Tests/tdd-*.txt
