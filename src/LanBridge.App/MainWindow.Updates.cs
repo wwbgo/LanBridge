@@ -13,9 +13,10 @@ internal sealed partial class MainWindow
         ? new Version(version.Major, version.Minor, Math.Max(0, version.Build))
         : new Version(0, 1, 0);
 
-    private async Task CheckUpdatesAsync()
+    internal async Task CheckUpdatesFromTrayAsync()
     {
-        if (_dialogOpen || _closed || _exitLifecycle.IsExitRequested) return;
+        if (_busy || _dialogOpen || _closed || _exitLifecycle.IsExitRequested) return;
+        ShowFromTray();
         _dialogOpen = true;
         UpdateActions();
         try

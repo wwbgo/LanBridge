@@ -127,6 +127,22 @@ try
     var root = AutomationElement.FromHandle(main);
     await Until(() => root.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.NameProperty, "添加规则"))?.Current.IsEnabled == true, "Published UI not connected.");
     Pass("published UI connects to exact isolated Host and owns a tray window");
+    string layoutScript = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "tests", "UiLayoutSmoke.ps1"));
+    using (var layout = Process.Start(new ProcessStartInfo("powershell.exe")
+    {
+        UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true,
+        StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8,
+        ArgumentList = { "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", $"[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false); & ([ScriptBlock]::Create([IO.File]::ReadAllText('{layoutScript.Replace("'", "''")}'))) -AppProcessId {app.Id}" }
+    })!)
+    {
+        var output = layout.StandardOutput.ReadToEndAsync();
+        var error = layout.StandardError.ReadToEndAsync();
+        await layout.WaitForExitAsync();
+        Console.Write(await output);
+        Console.Error.Write(await error);
+        Check(layout.ExitCode == 0, "Published window layout smoke failed.");
+    }
+    Pass("published checkbox labels centered, update command absent, default/minimum-size toolbar aligned");
     bool topLevel = false;
     Native.EnumWindows((window, _) => { if (window == tray) topLevel = true; return true; }, IntPtr.Zero);
     Check(topLevel, "Tray needs a hidden top-level HWND to receive TaskbarCreated broadcasts and own a foreground popup.");
@@ -145,6 +161,30 @@ try
     Native.PostMessage(tray, 0x8031, IntPtr.Zero, new IntPtr((1 << 16) | 0x0400));
     await Until(() => Native.IsWindowVisible(main), "Version-4 tray select did not restore window.");
     Pass("version-4 tray select restores hidden window");
+    ((WindowPattern)root.GetCurrentPattern(WindowPattern.Pattern)).Close();
+    await Until(() => !Native.IsWindowVisible(main), "Window did not hide before tray update test.");
+    await InvokeTrayMenu(tray, "检查更新");
+    await Until(() => Native.IsWindowVisible(main), "Tray update command did not restore hidden window.");
+    AutomationElement? updateResult = null;
+    await Until(() =>
+    {
+        var texts = root.FindAll(TreeScope.Descendants, Condition.TrueCondition);
+        updateResult = texts.Cast<AutomationElement>().FirstOrDefault(element =>
+            element.Current.Name is "已是最新版本" or "检查更新失败" || element.Current.Name.StartsWith("发现 LanBridge v", StringComparison.Ordinal));
+        return updateResult is not null;
+    }, "Tray update command did not show the real request result.", 30000);
+    Console.WriteLine("UPDATE RESULT " + updateResult!.Current.Name);
+    if (updateResult.Current.Name == "检查更新失败")
+    {
+        var notice = TreeWalker.RawViewWalker.GetParent(updateResult);
+        if (notice is not null)
+            Console.WriteLine("UPDATE DETAIL " + string.Join(" | ", notice.FindAll(TreeScope.Descendants, Condition.TrueCondition).Cast<AutomationElement>().Select(element => element.Current.Name).Where(name => !string.IsNullOrWhiteSpace(name)).Distinct()));
+    }
+    var later = root.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.NameProperty, "稍后"));
+    if (later is not null) ((InvokePattern)later.GetCurrentPattern(InvokePattern.Pattern)).Invoke();
+    Check(!app.HasExited && !host!.HasExited && FindTray() == tray, "Checking updates exited UI/backend/tray.");
+    await Echo();
+    Pass("native tray Check Updates restores hidden UI, displays real request result and preserves forwarding without installing");
     await InvokeTrayMenu(tray, "退出 LanBridge");
     await Until(() => app.HasExited && host!.HasExited, "Native tray exit left UI/backend alive.", 15000);
     Check(app.ExitCode == 0 && host!.ExitCode == 0, "Exit code must be zero.");

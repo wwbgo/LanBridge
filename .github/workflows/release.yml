@@ -55,7 +55,7 @@ jobs:
           } else {
             # Manual runs and pushes to main validate/build the local default only.
             $tag = ''
-            $version = '0.1.0'
+            $version = '0.1.1'
             & ./scripts/Release.ps1 -Version $version -ValidateOnly
           }
           "RELEASE_TAG=$tag" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append

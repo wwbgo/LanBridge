@@ -106,26 +106,26 @@ scripts/                构建、打包、显式安装及防火墙辅助工具
 
 正式发行版见 [GitHub Releases](https://github.com/wwbgo/LanBridge/releases)。Windows x64 提供：
 
-- `LanBridge-Setup.exe`：当前用户安装程序，无需安装系统服务。
+- `LanBridge-Setup.exe`：当前用户安装程序，无需安装系统服务。安装向导支持 English / 简体中文，默认按当前用户的 Windows 显示语言选择（不是区域格式）；不匹配时回退为英语，仍可手动切换，旧安装语言不会覆盖本次系统语言判断。此设置只影响安装向导，应用主界面目前仍为中文。
 - `LanBridge-win-x64.zip`：便携包，完整解压后启动 `LanBridge.App.exe`，不要只复制 EXE。
 - `SHA256SUMS`：安装包及便携包的 SHA-256 清单。
 
 ### 维护者发布
 
-使用严格的 `v主版本.次版本.修订号` tag（例如 `v0.1.0`）发布稳定版。版本号同时写入 App、Host 和安装程序。
+使用严格的 `v主版本.次版本.修订号` tag（例如 `v0.1.1`）发布稳定版。版本号同时写入 App、Host 和安装程序。
 
 ```powershell
 # 在确认代码及验证结果已提交后执行；不要重用或移动已发布 tag。
 git push origin main
-git tag -a v0.1.0 -m "LanBridge 0.1.0"
-git push origin v0.1.0
+git tag -a v0.1.1 -m "LanBridge 0.1.1"
+git push origin v0.1.1
 ```
 
 GitHub Actions 在 Windows runner 上运行测试、构建、打包，并将安装包、便携包和校验清单上传到同一 Release。构建或测试失败时不会发布正式版。工作流本身使用仓库的 `GITHUB_TOKEN`，不需要额外保存个人令牌。运行结果请以仓库 Actions 页面为准，本地构建成功不等于远程发布成功。
 
 ### 应用内检查与升级
 
-点击主窗口的 **检查更新**（无需先选择规则或连接后台）。应用只查询本仓库最新的稳定 Release，并显示当前/目标版本、发布说明和升级方式；不会后台静默安装。
+右键点击通知区域的 LanBridge 托盘图标，选择 **检查更新**（无需先选择规则或连接后台）。主页面不显示更新入口；窗口隐藏时会先恢复窗口再展示检查结果。应用只查询本仓库最新的稳定 Release，并显示当前/目标版本、发布说明和升级方式；不会后台静默安装。
 
 1. 点击“下载更新”，下载官方 HTTPS 资产，校验 `SHA256SUMS` 及 GitHub 提供的 SHA-256 digest。
 2. 确认升级。助手先校验并准备文件，收到后台正常退出确认后才获得安装授权；应用退出后才替换文件。

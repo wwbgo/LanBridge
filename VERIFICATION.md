@@ -1,5 +1,32 @@
 # Local verification record
 
+## Version 0.1.1 — release candidate verification
+
+- Version defaults are synchronized to **0.1.1** across MSBuild, build/package/release scripts, Inno Setup and the main/manual CI path. The new release tag is `v0.1.1`; existing published tags must not be moved.
+- Full `scripts/Build.ps1 -Configuration Release -Version 0.1.1 -ArtifactsRoot artifacts/validation-v0.1.1` passed: Core **83/83**, Host/Control **93/93**, Discovery **35/35**, App/update fixtures, Editor **9/9** and lifecycle checks. Host and WinUI builds reported **0 warnings / 0 errors**. The latest TRX files were parsed and all report zero failures.
+- Fixed the combined-protocol listen-conflict test fixture to reserve a TCP-compatible UDP port with bounded retries; concurrent tests can occupy the UDP side of a TCP candidate on Windows. Targeted and repeated Host runs passed before the complete build.
+- Python packaging/icon/tray contract suite: **18/18** passed. `scripts/Release.ps1 -TagName v0.1.1 -OutputRoot artifacts/release-v0.1.1` generated all three assets; both manifest hashes, portable ZIP CRC and flat-root App/Host entries were independently checked. Published App and Host file versions are **0.1.1.0**.
+- Against this exact candidate portable payload, UIA layout checks passed at default/minimum sizes, with checkbox-label center differences of **0.5 px**, no main-page update command, and real TCP/UDP forwarding preserved when the window closes.
+- The full native tray acceptance did **not** complete on two candidate runs: the existing UIA Invoke and physical-click fallback timed out selecting Open while the native popup remained visible. The earlier eight-check successful run below applies to the previous local payload; it is not a new full-tray certification for this candidate. The failing runs cleaned up only their isolated App/Host instances.
+- No real installation, installed-application replacement, Windows display-language change, service/firewall changes, or WSL/container/VM startup was performed. Remote push, Actions and Release publication must be verified independently after publication.
+
+## Batch checkbox alignment and tray-only updates — current published payload
+
+- Batch-select and select-all labels explicitly center vertically with native checkbox glyphs; the main-page update button is removed. The native tray menu now wires Check Updates to the guarded update handler and restores a hidden window before showing results.
+- Python regression suite: **18/18** passed. App/update fixture assertions and lifecycle harness passed; `git diff --check` passed.
+- Regenerated `artifacts/LanBridge-win-x64` and ran `tests/LanBridge.Tray.Acceptance` against its App/Host with isolated scratch data. All **8** acceptance checks passed, including the nested UI layout smoke. Batch/select-all label and control centers differ by **0.5 px** at default and minimum window sizes; toolbar/columns remain aligned and the main page exposes no Check Updates command.
+- The real native tray Check Updates item restored the hidden window and displayed the real request result. This machine's GitHub request failed with `The SSL connection could not be established, see inner exception.` This verifies command routing and failure feedback, not a successful remote version check. No update was installed; TCP/UDP forwarding remained alive.
+- Tray exit and restart were exercised only for the isolated test instance: exact UI/Host exit, tray removal, port release, saved configuration and restored TCP/UDP forwarding all passed. No service installation, firewall modification or WSL/container/VM operation was performed.
+- These are local source/published-payload checks; no new GitHub Release or replacement of installed software is claimed.
+
+## Bilingual installer — Windows UI language default
+
+- Installer declares English and Simplified Chinese; uses `LanguageDetectionMethod=uilanguage`, `UsePreviousLanguage=no`, and `ShowLanguageDialog=yes`. English is the fallback; users can override the default. The application UI itself remains Chinese.
+- Simplified Chinese messages are versioned under `scripts/Languages/ChineseSimplified.isl`, preserving the translation's attribution; CI does not depend on a developer-machine language-file path.
+- `python -m unittest discover -s tests -p 'test_*.py' -v`: **14/14** packaging/icon tests passed, including the new language contract.
+- Inno Setup **7.1.0** successfully compiled `scripts/LanBridge.iss` with both language files using the existing `artifacts/final-release/LanBridge-win-x64` payload. Output: `artifacts/bilingual-installer/LanBridge-Setup.exe`. This verifies the installer-script change, not a fresh application build or a new complete Release asset set.
+- No real installation, application replacement, Windows display-language change, or installer-wizard UI smoke was performed. Existing GitHub Release assets were not replaced by this verification.
+
 ## Initial GitHub publication — local release verification
 
 - Parent reran `scripts/Build.ps1 -Configuration Release -Version 0.1.0 -ArtifactsRoot artifacts/final-validation`: Core **83/83**, Host/Control **93/93**, Discovery **35/35**, App/update assertions, Editor **9/9**, and lifecycle harness passed. Host/WinUI builds: **0 warnings / 0 errors**.

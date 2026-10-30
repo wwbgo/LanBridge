@@ -23,6 +23,16 @@ function Set-Batch([bool]$enabled) {
         $toggle.Toggle(); Start-Sleep -Milliseconds 300
     }
 }
+function Check-CheckboxAlignment([string]$name) {
+    $checkbox = Find-Name $name
+    $content = [System.Windows.Automation.TreeWalker]::RawViewWalker.GetFirstChild($checkbox)
+    Assert-True ($null -ne $content) "$name must expose its label in the raw accessibility tree."
+    $boxBounds = $checkbox.Current.BoundingRectangle
+    $textBounds = $content.Current.BoundingRectangle
+    $delta = [Math]::Abs(($boxBounds.Top + $boxBounds.Height / 2) - ($textBounds.Top + $textBounds.Height / 2))
+    Assert-True ($delta -le 2) "$name label and checkbox center differ by $delta pixels."
+    Write-Output "PASS $name label and checkbox vertically centered (delta=$delta px)"
+}
 function Check-Columns {
     $list = Find-Name '转发规则列表'
     $rowCondition = [System.Windows.Automation.PropertyCondition]::new([System.Windows.Automation.AutomationElement]::ControlTypeProperty, [System.Windows.Automation.ControlType]::ListItem)
@@ -42,7 +52,10 @@ function Check-Columns {
 $transform = [System.Windows.Automation.TransformPattern]$window.GetCurrentPattern([System.Windows.Automation.TransformPattern]::Pattern)
 $original = $window.Current.BoundingRectangle
 try {
+    Assert-True ($null -eq (Find-Name '检查更新')) 'Main page must not expose a check-for-updates command.'
+    Write-Output 'PASS main page contains no update command'
     Set-Batch $false
+    Check-CheckboxAlignment '批量选择规则'
     $batch = Find-Name '批量选择规则'
     $batchText = [System.Windows.Automation.TreeWalker]::RawViewWalker.GetFirstChild($batch)
     Assert-True ($null -ne $batchText) 'Batch selection must expose its content in the raw accessibility tree.'
@@ -61,9 +74,13 @@ try {
     Assert-True ($selection.Current.CanSelectMultiple) 'Batch mode must enable multiple selection.'
     Assert-True (Visible '全选转发规则') 'Batch mode must reveal select-all.'
     Assert-True (Visible '已选 0 条') 'Batch mode must show selected count.'
+    Check-CheckboxAlignment '批量选择规则'
+    Check-CheckboxAlignment '全选转发规则'
     Check-Columns
     Write-Output 'PASS published batch mode reveals controls and keeps column alignment'
     $transform.Resize(760,600); Start-Sleep -Milliseconds 400
+    Check-CheckboxAlignment '批量选择规则'
+    Check-CheckboxAlignment '全选转发规则'
     Check-Columns
     $more = Find-Name '更多'
     $batch = Find-Name '批量选择规则'

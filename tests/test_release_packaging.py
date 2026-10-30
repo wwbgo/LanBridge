@@ -53,6 +53,21 @@ class ReleasePackagingTests(unittest.TestCase):
         self.assertNotIn("=x64\n", source)
         self.assertIn("#define MyAppVersion", source)
 
+    def test_installer_supports_english_and_chinese_with_system_ui_default(self):
+        source = (SCRIPTS / "LanBridge.iss").read_text(encoding="utf-8")
+        self.assertIn("[Languages]", source)
+        languages = source.split("[Languages]", 1)[1].split("[", 1)[0]
+        self.assertRegex(languages, r'Name: "english"; MessagesFile: "compiler:Default.isl"')
+        self.assertRegex(languages, r'Name: "chinesesimplified"; MessagesFile: "Languages\\ChineseSimplified.isl"')
+        self.assertLess(languages.index('Name: "english"'), languages.index('Name: "chinesesimplified"'))
+        self.assertIn("LanguageDetectionMethod=uilanguage", source)
+        self.assertIn("UsePreviousLanguage=no", source)
+        self.assertIn("ShowLanguageDialog=yes", source)
+        self.assertIn('Description: "{cm:LaunchProgram,{#MyAppName}}"', source)
+        translation = SCRIPTS / "Languages/ChineseSimplified.isl"
+        self.assertTrue(translation.is_file())
+        self.assertIn("LanguageID=$0804", translation.read_text(encoding="utf-8-sig"))
+
     def test_release_checksum_contract_is_sha256_two_space_format(self):
         source = (SCRIPTS / "Release.ps1").read_text(encoding="utf-8")
         self.assertIn("Get-FileHash", source)
@@ -68,7 +83,7 @@ class ReleasePackagingTests(unittest.TestCase):
 
     def test_command_line_installer_version_is_not_redefined(self):
         source = (SCRIPTS / "LanBridge.iss").read_text(encoding="utf-8")
-        self.assertRegex(source, r'#ifndef MyAppVersion\s+#define MyAppVersion "0\.1\.0"\s+#endif')
+        self.assertRegex(source, r'#ifndef MyAppVersion\s+#define MyAppVersion "0\.1\.1"\s+#endif')
 
     def test_package_does_not_copy_repository_sources_into_payload(self):
         source = (SCRIPTS / "Package-Single.ps1").read_text(encoding="utf-8")

@@ -1,6 +1,6 @@
 #define MyAppName "LanBridge"
 #ifndef MyAppVersion
-  #define MyAppVersion "0.1.0"
+  #define MyAppVersion "0.1.1"
 #endif
 #define MyAppPublisher "LanBridge contributors"
 #define MyAppExeName "LanBridge.App.exe"
@@ -29,6 +29,18 @@ PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 LicenseFile={#SourceDir}\LICENSE
+LanguageDetectionMethod=uilanguage
+UsePreviousLanguage=no
+ShowLanguageDialog=yes
+
+[Languages]
+; English is the fallback when the Windows UI language has no match.
+Name: "english"; MessagesFile: "compiler:Default.isl"
+Name: "chinesesimplified"; MessagesFile: "Languages\ChineseSimplified.isl"
+
+[CustomMessages]
+english.LaunchProgram=Launch %1
+chinesesimplified.LaunchProgram=启动 %1
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -38,4 +50,4 @@ Name: "{group}\LanBridge"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{ap
 Name: "{autodesktop}\LanBridge"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\Assets\LanBridge.ico"
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "启动 LanBridge"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent

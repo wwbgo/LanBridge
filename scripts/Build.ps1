@@ -2,7 +2,7 @@
 param(
     [ValidateSet('Debug', 'Release')][string]$Configuration = 'Release',
     [switch]$SkipTests,
-    [string]$Version = '0.1.0',
+    [string]$Version = '0.1.1',
     [string]$ArtifactsRoot = 'artifacts'
 )
 

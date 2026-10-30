@@ -22,6 +22,7 @@ internal sealed class TrayIcon : IDisposable
     private const int IdIcon = 1;
     private const int IdOpen = 1001;
     private const int IdExit = 1002;
+    private const int IdCheckUpdates = 1003;
     private const uint NifMessage = 0x00000001;
     private const uint NifIcon = 0x00000002;
     private const uint NifTip = 0x00000004;
@@ -56,6 +57,7 @@ internal sealed class TrayIcon : IDisposable
     private bool _disposed;
 
     internal event EventHandler? OpenRequested;
+    internal event EventHandler? CheckUpdatesRequested;
     internal event EventHandler? ExitRequested;
 
     internal TrayIcon()
@@ -103,6 +105,8 @@ internal sealed class TrayIcon : IDisposable
     internal void OpenMainWindow() => OpenRequested?.Invoke(this, EventArgs.Empty);
 
     internal void RequestExit() => ExitRequested?.Invoke(this, EventArgs.Empty);
+
+    internal void RequestCheckUpdates() => CheckUpdatesRequested?.Invoke(this, EventArgs.Empty);
 
     private void AddIcon()
     {
@@ -157,6 +161,7 @@ internal sealed class TrayIcon : IDisposable
             switch (unchecked((int)(wParam.ToInt64() & 0xFFFF)))
             {
                 case IdOpen: OpenMainWindow(); break;
+                case IdCheckUpdates: RequestCheckUpdates(); break;
                 case IdExit: RequestExit(); break;
             }
             return IntPtr.Zero;
@@ -173,6 +178,7 @@ internal sealed class TrayIcon : IDisposable
         try
         {
             AppendMenu(menu, MfString | MfEnabled, (uint)IdOpen, "打开主界面");
+            AppendMenu(menu, MfString | MfEnabled, (uint)IdCheckUpdates, "检查更新");
             AppendMenu(menu, MfSeparator, 0, null);
             AppendMenu(menu, MfString | MfEnabled, (uint)IdExit, "退出 LanBridge");
             if (!GetCursorPos(out var point)) return;

@@ -21,8 +21,19 @@ internal sealed partial class MainWindow : Window
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(3) };
     private readonly Grid _root = new() { Padding = new Thickness(24), RowSpacing = 12 };
     private readonly ListView _list = (ListView)XamlReader.Load("<ListView xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation' BorderBrush='{ThemeResource CardStrokeColorDefaultBrush}' Background='{ThemeResource CardBackgroundFillColorDefaultBrush}' SelectionMode='Single' IsMultiSelectCheckBoxEnabled='False' IsItemClickEnabled='False' />");
-    private readonly CheckBox _batchMode = new() { Content = "批量选择", MinWidth = 0, Padding = new Thickness(0), HorizontalContentAlignment = HorizontalAlignment.Right };
-    private readonly CheckBox _selectAll = new() { Content = "全选", IsThreeState = true, MinWidth = 0 };
+    // Native checkbox glyphs are centered; keep their labels centered too, rather than
+    // relying on the default top-aligned content and its compensating top padding.
+    private readonly CheckBox _batchMode = new()
+    {
+        Content = "批量选择", MinWidth = 0, Padding = new Thickness(8, 0, 0, 0),
+        HorizontalContentAlignment = HorizontalAlignment.Right,
+        VerticalAlignment = VerticalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center
+    };
+    private readonly CheckBox _selectAll = new()
+    {
+        Content = "全选", IsThreeState = true, MinWidth = 0, Padding = new Thickness(8, 0, 0, 0),
+        VerticalAlignment = VerticalAlignment.Center, VerticalContentAlignment = VerticalAlignment.Center
+    };
     private readonly Grid _columnHeader = RuleColumns(new Thickness(28, 8, 28, 8));
     private readonly TextBlock _selectionCount = Text("已选 0 条", 13);
     private readonly TextBlock _connection = Text("正在连接后台…", 13);
@@ -40,7 +51,6 @@ internal sealed partial class MainWindow : Window
     private readonly MenuFlyoutItem _probe = new() { Text = "测试目标 TCP", Icon = new SymbolIcon(Symbol.Find) };
     private readonly Button _more = Button("更多", Symbol.More);
     private readonly Button _batch = Button("批量操作", Symbol.More);
-    private readonly Button _updates = Button("检查更新", Symbol.Sync);
 
     private enum BatchAction { Start, Stop, Delete }
 
@@ -81,7 +91,7 @@ internal sealed partial class MainWindow : Window
             UpdateActions();
         };
         _add.Click += async (_, _) => await EditRuleAsync(null);
-        _updates.Click += async (_, _) => await CheckUpdatesAsync();
+
         _edit.Click += async (_, _) => { if (Selected is { } rule) await EditRuleAsync(rule); };
         _toggle.Click += async (_, _) =>
         {
@@ -196,10 +206,7 @@ internal sealed partial class MainWindow : Window
         header.Children.Add(title);
         _add.Style = (Style)Application.Current.Resources["AccentButtonStyle"];
         _add.VerticalAlignment = VerticalAlignment.Center;
-        var headerActions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
-        headerActions.Children.Add(_updates);
-        headerActions.Children.Add(_add);
-        Grid.SetColumn(headerActions, 1); header.Children.Add(headerActions);
+        Grid.SetColumn(_add, 1); header.Children.Add(_add);
         Place(header, 0);
 
         _connectionRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -300,7 +307,7 @@ internal sealed partial class MainWindow : Window
         _selectAll.IsChecked = selectedCount == 0 ? false : selectedCount == _list.Items.Count ? true : null;
         _selectionCount.Text = $"已选 {selectedCount} 条";
         _add.IsEnabled = ready;
-        _updates.IsEnabled = !_busy && !_dialogOpen && !_closed && !_exitLifecycle.IsExitRequested;
+
         _edit.IsEnabled = _delete.IsEnabled = _toggle.IsEnabled = ready && rule is not null;
         _copy.IsEnabled = ready && rule is not null;
         _more.IsEnabled = ready && rule is not null;

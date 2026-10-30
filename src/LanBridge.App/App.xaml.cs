@@ -39,6 +39,7 @@ public partial class App : Application
         _window = window;
         _tray = new TrayIcon();
         _tray.OpenRequested += (_, _) => window.ShowFromTray();
+        _tray.CheckUpdatesRequested += async (_, _) => await window.CheckUpdatesFromTrayAsync();
         _tray.ExitRequested += async (_, _) => await window.ExitAsync();
         window.Closed += (_, _) =>
         {

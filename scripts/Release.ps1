@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$TagName,
-    [string]$Version = '0.1.0',
+    [string]$Version = '0.1.1',
     [ValidateSet('Debug', 'Release')][string]$Configuration = 'Release',
     [string]$OutputRoot = 'artifacts/release',
     [string]$IsccPath,
@@ -18,7 +18,7 @@ function Get-ReleaseVersion([string]$Tag, [string]$RequestedVersion) {
             throw "Release tag must match vX.Y.Z (received '$Tag')."
         }
         $tagVersion = $Matches.version
-        if ($PSBoundParameters.ContainsKey('RequestedVersion') -and $RequestedVersion -and $RequestedVersion -ne '0.1.0' -and $RequestedVersion -ne $tagVersion) {
+        if ($PSBoundParameters.ContainsKey('RequestedVersion') -and $RequestedVersion -and $RequestedVersion -ne '0.1.1' -and $RequestedVersion -ne $tagVersion) {
             throw "Version '$RequestedVersion' does not match tag '$Tag'."
         }
         return $tagVersion

@@ -76,10 +76,29 @@ public sealed class ListenCheckTests
     [InlineData(TransportProtocol.Udp)]
     public Task Client_reports_an_external_combined_protocol_conflict(TransportProtocol occupied) => WithHostAsync(async (_, client, _) =>
     {
-        using var blocker = Bind(IPAddress.Loopback, 0, occupied);
-        var result = await client.CheckListenAsync(Rule() with { ListenPort = ((IPEndPoint)blocker.LocalEndPoint!).Port, Protocol = TransportProtocol.TcpUdp });
-        Assert.Equal(ListenCheckStatus.Conflict, result.Status);
-        Assert.Contains(occupied == TransportProtocol.Tcp ? "TCP" : "UDP", result.Message);
+        Socket blocker;
+        if (occupied == TransportProtocol.Udp)
+        {
+            blocker = null!;
+            for (var attempt = 0; attempt < 20 && blocker is null; attempt++)
+            {
+                using var tcpCandidate = Bind(IPAddress.Loopback, 0, TransportProtocol.Tcp);
+                int port = ((IPEndPoint)tcpCandidate.LocalEndPoint!).Port;
+                try { blocker = Bind(IPAddress.Loopback, port, TransportProtocol.Udp); }
+                catch (SocketException) when (attempt < 19) { }
+            }
+            Assert.NotNull(blocker);
+        }
+        else
+        {
+            blocker = Bind(IPAddress.Loopback, 0, TransportProtocol.Tcp);
+        }
+        using (blocker)
+        {
+            var result = await client.CheckListenAsync(Rule() with { ListenPort = ((IPEndPoint)blocker.LocalEndPoint!).Port, Protocol = TransportProtocol.TcpUdp });
+            Assert.Equal(ListenCheckStatus.Conflict, result.Status);
+            Assert.Contains(occupied == TransportProtocol.Tcp ? "TCP" : "UDP", result.Message);
+        }
     });
 
     [Theory]
