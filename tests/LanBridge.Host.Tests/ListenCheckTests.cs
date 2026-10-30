@@ -129,8 +129,9 @@ public sealed class ListenCheckTests
     {
         string name = "LanBridge.Test.Listen.Legacy." + Guid.NewGuid().ToString("N");
         using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-        using var pipe = new System.IO.Pipes.NamedPipeServerStream(name, System.IO.Pipes.PipeDirection.InOut, 1,
-            System.IO.Pipes.PipeTransmissionMode.Byte, System.IO.Pipes.PipeOptions.Asynchronous | System.IO.Pipes.PipeOptions.CurrentUserOnly);
+        using var pipe = System.IO.Pipes.NamedPipeServerStreamAcl.Create(name, System.IO.Pipes.PipeDirection.InOut, 1,
+            System.IO.Pipes.PipeTransmissionMode.Byte, System.IO.Pipes.PipeOptions.Asynchronous, 8192, 8192,
+            HostSecurity.CreatePipeSecurity(PipeProtocol.CurrentOwnerSid));
         var serving = Task.Run(async () =>
         {
             await pipe.WaitForConnectionAsync(deadline.Token);

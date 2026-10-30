@@ -29,6 +29,7 @@ public sealed class ClientShutdownTests
         string name = "LanBridge.Shutdown.Test." + Guid.NewGuid().ToString("N");
         using var stop = new CancellationTokenSource(TimeSpan.FromSeconds(15));
         int shutdowns = 0;
+        var ready = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var server = Task.Run(async () =>
         {
             try
@@ -38,6 +39,7 @@ public sealed class ClientShutdownTests
                     using var pipe = NamedPipeServerStreamAcl.Create(name, PipeDirection.InOut, 1,
                         PipeTransmissionMode.Byte, PipeOptions.Asynchronous, 8192, 8192,
                         HostSecurity.CreatePipeSecurity(PipeProtocol.CurrentOwnerSid));
+                    ready.TrySetResult();
                     await pipe.WaitForConnectionAsync(stop.Token);
                     var request = await PipeProtocol.ReadAsync<BridgeRequest>(pipe, stop.Token);
                     if (request.Command == "shutdown") shutdowns++;
@@ -51,6 +53,8 @@ public sealed class ClientShutdownTests
         });
         try
         {
+            // Test server scheduling is not part of the client's connection deadline.
+            await ready.Task.WaitAsync(TimeSpan.FromSeconds(5));
             var error = await Record.ExceptionAsync(() => new BridgeClient(name).ShutdownAsync());
             Assert.NotNull(error);
             Assert.Equal(0, shutdowns);

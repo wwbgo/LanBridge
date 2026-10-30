@@ -10,8 +10,10 @@ public class ControlProtocolTests
     public async Task Client_roundtrips_real_pipe_and_surfaces_remote_error()
     {
         string name = "LanBridge.Test." + Guid.NewGuid().ToString("N");
-        using var server = new System.IO.Pipes.NamedPipeServerStream(name, System.IO.Pipes.PipeDirection.InOut, 1,
-            System.IO.Pipes.PipeTransmissionMode.Byte, System.IO.Pipes.PipeOptions.Asynchronous | System.IO.Pipes.PipeOptions.CurrentUserOnly);
+        // Match production's explicit owner even on an elevated Windows runner.
+        using var server = System.IO.Pipes.NamedPipeServerStreamAcl.Create(name, System.IO.Pipes.PipeDirection.InOut, 1,
+            System.IO.Pipes.PipeTransmissionMode.Byte, System.IO.Pipes.PipeOptions.Asynchronous, 8192, 8192,
+            HostSecurity.CreatePipeSecurity(PipeProtocol.CurrentOwnerSid));
         var serving = Task.Run(async () =>
         {
             await server.WaitForConnectionAsync();
@@ -37,8 +39,10 @@ public class ControlProtocolTests
     public async Task Client_deadline_bounds_a_connected_but_silent_server()
     {
         string name = "LanBridge.Test." + Guid.NewGuid().ToString("N");
-        using var server = new System.IO.Pipes.NamedPipeServerStream(name, System.IO.Pipes.PipeDirection.InOut, 1,
-            System.IO.Pipes.PipeTransmissionMode.Byte, System.IO.Pipes.PipeOptions.Asynchronous | System.IO.Pipes.PipeOptions.CurrentUserOnly);
+        // Match production's explicit owner even on an elevated Windows runner.
+        using var server = System.IO.Pipes.NamedPipeServerStreamAcl.Create(name, System.IO.Pipes.PipeDirection.InOut, 1,
+            System.IO.Pipes.PipeTransmissionMode.Byte, System.IO.Pipes.PipeOptions.Asynchronous, 8192, 8192,
+            HostSecurity.CreatePipeSecurity(PipeProtocol.CurrentOwnerSid));
         var serving = server.WaitForConnectionAsync();
         await Assert.ThrowsAsync<TimeoutException>(() => new BridgeClient(name, TimeSpan.FromMilliseconds(150)).GetStateAsync());
         await serving.WaitAsync(TimeSpan.FromSeconds(2));
