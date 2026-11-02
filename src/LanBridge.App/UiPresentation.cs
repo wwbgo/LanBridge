@@ -32,6 +32,9 @@ internal static class UiPresentation
             : result?.StartsWith("UDP 无连接", StringComparison.Ordinal) == true
                 ? result
                 : "目标连接测试未成功，请确认目标服务已启动，且目标地址和端口正确。";
+    internal static bool ProbeSucceeded(string? result) =>
+        result?.StartsWith("TCP 目标连接成功", StringComparison.Ordinal) == true ||
+        result?.StartsWith("UDP 无连接", StringComparison.Ordinal) == true;
 
     internal static string ProtocolLabel(TransportProtocol protocol) => protocol switch
     {

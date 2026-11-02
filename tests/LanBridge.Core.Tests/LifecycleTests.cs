@@ -198,5 +198,10 @@ public class LifecycleTests
         var status = Assert.Single(engine.GetStatuses());
         Assert.True(status.Running);
         await EventuallyAsync(() => Assert.Single(engine.GetStatuses()).ActiveConnections == 0, timeout.Token);
+        client.Dispose(); // Reproduce the UI sequence: the client disconnects before the rule is stopped.
+        await engine.StopAsync(rule.Id);
+        var stopped = Assert.Single(engine.GetStatuses());
+        Assert.False(stopped.Running);
+        Assert.Null(stopped.Error);
     }
 }

@@ -1,5 +1,38 @@
 # Local verification record
 
+## Version 0.1.2 — release verification
+
+- Includes the single-selection start/stop refresh-loop fix, warning/error-only operation feedback, and clearing stale runtime errors only after explicit Stop has fully drained listener/workers. Failed starts still retain their diagnostic error; active connection failures remain visible while the rule is running.
+- Stop regression was observed RED before the engine change: the stopped runtime retained a TCP target-refused error. The updated test closes the client before Stop and asserts `Running=false` and `Error=null`; targeted lifecycle checks then passed. This reproduces stale-error retention, not every possible client-disconnect mode.
+- Version defaults are synchronized to **0.1.2** across MSBuild, build/package/release scripts, Inno Setup and README examples. Release tag: `v0.1.2`; previous tags are preserved.
+- `python -m unittest discover -s tests -p 'test_*.py' -v` passed **23/23** after review corrections. Main/manual CI now reads `Directory.Build.props`; an executable test runs the workflow's actual validation block for main push, manual dispatch and tag push and verifies the exported versions. The installer guard test compares its default version against `Directory.Build.props` instead of hardcoding the prior release; its first run correctly detected that stale test literal.
+- `scripts/Build.ps1 -Configuration Release -Version 0.1.2 -ArtifactsRoot artifacts/validation-v0.1.2` passed: Core **83/83**, Host **93/93**, Discovery **35/35**, App/update fixtures, Editor **9/9** and lifecycle assertions. Parsed TRX counters report zero failures; Host/WinUI builds report **0 warnings / 0 errors**.
+- `scripts/Release.ps1 -TagName v0.1.2 -OutputRoot artifacts/release-v0.1.2` compiled the bilingual installer and generated the portable ZIP and `SHA256SUMS`. Both asset hashes, ZIP CRC, flat-root App/Host entries and exact ZIP-to-release-payload hashes were verified. App/Core/Host file versions are **0.1.2.0**. `scripts/Package.ps1 -Version 0.1.2 -Force` also regenerated the standard `artifacts/LanBridge-win-x64` App/Host, with matching versions; the two packaging modes have different Core/Host hashes and are not asserted byte-identical.
+- The earlier hotfix sections describe pre-release verification and installation history, not a remote publication claim. Release binaries were built before the release commit, so their informational source revision reflects the preceding Git HEAD; the tag-triggered CI build will use the tagged commit.
+- The existing full native tray popup automation limitation remains unverified for this version. No permission to stop the user's running App/Host is implied by the release request; isolated UI/Host acceptance must not silently terminate it.
+
+
+## Quiet normal-operation notices — local hotfix
+
+- Main-window and rule-editor feedback now suppresses `Success` and `Informational` notices by closing any existing notice; only `Warning` and `Error` feedback is shown.
+- Successful target TCP probes are suppressed; unsuccessful probe results remain warnings. Loopback copy remains a warning because the copied address is valid but not LAN-reachable.
+- RED→GREEN: `python -m unittest tests.test_quiet_operation_notices -v` first failed against the old behavior, then passed **4/4** after the change. Full Python suite passed **22/22**; App assertion harness passed; `scripts/Package.ps1 -Force` completed successfully.
+- Installed `D:/Programs/LanBridge` was backed up to `D:/Programs/LanBridge-backups/quiet-notices-20261102-101657`, replaced with the tested App payload after stopping the exact previously launched App/Host, and reopened. UIA cold-start verification confirmed the original two rules loaded and no normal-operation notice or error was visible.
+- This is a local working-tree/installed hotfix, not a commit, tag or remote Release. No service/firewall changes or WSL/container/VM operations were performed.
+
+
+## Single-selection start/stop refresh loop — local hotfix
+
+- Reproduced against installed `D:/Programs/LanBridge` v0.1.1 with an isolated `isolated-tray` rule: Stop committed successfully, but restoring selection via `SelectedItems.Add` in WinUI single-selection mode failed. The display exception was then reported as a backend disconnect, leaving `_ruleSignature` stale and causing repeated reconnect/list rebuilds.
+- Minimal production fix: use `SelectedItem` for `ListViewSelectionMode.Single`; keep `SelectedItems.Add` only for multi-selection. Existing backend security, configuration, retry policy and forwarding behavior are unchanged.
+- Added `tests/UiRuleLifecycleSmoke.ps1` and `--rule-lifecycle-only` to the isolated tray acceptance harness. Observed RED on installed v0.1.1 before replacement, including the false disconnected/refresh-failed UI; observed GREEN on freshly packaged `artifacts/LanBridge-win-x64` and again on the patched installed App with its existing single-file Host.
+- Reproduce the regression gate with `dotnet run --project tests/LanBridge.Tray.Acceptance -c Release -- artifacts/LanBridge-win-x64/LanBridge.App.exe --rule-lifecycle-only`. It opens an isolated test instance and refuses to run while an existing user App/Host is present; do not stop a user's running instance without permission. This gate is opt-in and is not currently part of the default CI run.
+- Real UI Stop → Start → Stop preserved single selection and row runtime IDs across multiple polling ticks, retained the same healthy Host PID, restored real TCP/UDP echo after Start, and released both listeners after Stop. No existing user rule was mutated by these tests.
+- Full build passed Core **83/83**, Host/Control **93/93**, Discovery **35/35**, App/update fixtures, Editor **9/9**, lifecycle checks and Python **18/18**; Host/WinUI builds reported **0 warnings / 0 errors**.
+- After explicit user approval, backed up nine UI product DLL/PDB/PRI files to `D:/Programs/LanBridge-backups/selection-fix-20261102-095509`, then replaced them with the tested package and verified SHA-256 readback. The installed single-file Host and all user configuration were preserved.
+- Reopened `D:/Programs/LanBridge/LanBridge.App.exe` normally. It cold-started the sibling Host with `--console`, loaded the original two disabled rules, and retained row identities, selection and enabled controls over ten seconds of polling. User `rules.json` SHA-256 remained unchanged.
+- This is a local working-tree/installed hotfix, not a new version, Git commit, tag or remote Release. No service/firewall changes or WSL/container/VM operations were performed. The unrelated full native tray popup acceptance limitation remains separate.
+
 ## Version 0.1.1 — release candidate verification
 
 - Version defaults are synchronized to **0.1.1** across MSBuild, build/package/release scripts, Inno Setup and the main/manual CI path. The new release tag is `v0.1.1`; existing published tags must not be moved.

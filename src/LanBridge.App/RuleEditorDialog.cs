@@ -216,6 +216,12 @@ internal sealed class RuleEditorDialog : ContentDialog
     }
     private void Feedback(string title, string message, InfoBarSeverity severity)
     {
+        if (severity is not (InfoBarSeverity.Warning or InfoBarSeverity.Error))
+        {
+            _feedback.IsOpen = false;
+            _feedbackFlyout.Hide();
+            return;
+        }
         _feedback.Title = title; _feedback.Message = message; _feedback.Severity = severity; _feedback.IsOpen = true;
         _feedbackFlyout.ShowAt(_discover);
     }
@@ -272,7 +278,11 @@ internal sealed class RuleEditorDialog : ContentDialog
     {
         if (_working || _protocol.SelectedIndex == 1 || ReadRule(false) is not { } rule) return;
         Working(true);
-        try { Feedback("目标 TCP 测试", UiPresentation.ProbeOutcome(await _client.ProbeAsync(rule, _ct)), InfoBarSeverity.Informational); }
+        try
+        {
+            string result = UiPresentation.ProbeOutcome(await _client.ProbeAsync(rule, _ct));
+            Feedback("目标 TCP 测试", result, UiPresentation.ProbeSucceeded(result) ? InfoBarSeverity.Success : InfoBarSeverity.Warning);
+        }
         catch (Exception) { Feedback("目标 TCP 测试未成功", "请确认目标服务已启动，且目标地址和端口正确。", InfoBarSeverity.Warning); }
         finally { Working(false); }
     }

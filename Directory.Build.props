@@ -4,7 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <Deterministic>true</Deterministic>
-    <Version>0.1.1</Version>
+    <Version>0.1.2</Version>
     <Authors>LanBridge contributors</Authors>
     <Description>Windows LAN to VM port forwarding</Description>
   </PropertyGroup>

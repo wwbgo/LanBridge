@@ -8,7 +8,9 @@ using System.Windows.Automation;
 using LanBridge.Control;
 using LanBridge.Core;
 
-if (args.Length != 1) throw new ArgumentException("Pass exact published LanBridge.App.exe path.");
+if (args.Length is < 1 or > 2 || (args.Length == 2 && args[1] != "--rule-lifecycle-only"))
+    throw new ArgumentException("Pass exact published LanBridge.App.exe path and optional --rule-lifecycle-only.");
+bool ruleLifecycleOnly = args.Length == 2;
 string appPath = Path.GetFullPath(args[0]);
 string hostPath = Path.Combine(Path.GetDirectoryName(appPath)!, "LanBridge.Host.exe");
 var client = new BridgeClient();
@@ -127,12 +129,12 @@ try
     var root = AutomationElement.FromHandle(main);
     await Until(() => root.FindFirst(TreeScope.Descendants, new PropertyCondition(AutomationElement.NameProperty, "添加规则"))?.Current.IsEnabled == true, "Published UI not connected.");
     Pass("published UI connects to exact isolated Host and owns a tray window");
-    string layoutScript = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "tests", "UiLayoutSmoke.ps1"));
+    string layoutScript = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "tests", ruleLifecycleOnly ? "UiRuleLifecycleSmoke.ps1" : "UiLayoutSmoke.ps1"));
     using (var layout = Process.Start(new ProcessStartInfo("powershell.exe")
     {
         UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true, RedirectStandardError = true,
         StandardOutputEncoding = Encoding.UTF8, StandardErrorEncoding = Encoding.UTF8,
-        ArgumentList = { "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", $"[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false); & ([ScriptBlock]::Create([IO.File]::ReadAllText('{layoutScript.Replace("'", "''")}'))) -AppProcessId {app.Id}" }
+        ArgumentList = { "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", $"[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false); & ([ScriptBlock]::Create([IO.File]::ReadAllText('{layoutScript.Replace("'", "''")}'))) -AppProcessId {app.Id}" + (ruleLifecycleOnly ? $" -ListenPort {rule.ListenPort}" : "") }
     })!)
     {
         var output = layout.StandardOutput.ReadToEndAsync();
@@ -141,6 +143,13 @@ try
         Console.Write(await output);
         Console.Error.Write(await error);
         Check(layout.ExitCode == 0, "Published window layout smoke failed.");
+    }
+    if (ruleLifecycleOnly)
+    {
+        Check((await client.GetStateAsync()).ProcessId == host!.Id && !host.HasExited, "UI mutations replaced or lost the healthy backend.");
+        Check(!(await client.GetStateAsync()).Rules.Single().Enabled, "Final stop did not persist.");
+        Pass("real stop/start/stop preserves selection and healthy backend across polling");
+        return;
     }
     Pass("published checkbox labels centered, update command absent, default/minimum-size toolbar aligned");
     bool topLevel = false;

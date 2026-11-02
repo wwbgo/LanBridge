@@ -1,6 +1,6 @@
 #define MyAppName "LanBridge"
 #ifndef MyAppVersion
-  #define MyAppVersion "0.1.1"
+  #define MyAppVersion "0.1.2"
 #endif
 #define MyAppPublisher "LanBridge contributors"
 #define MyAppExeName "LanBridge.App.exe"

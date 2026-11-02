@@ -112,13 +112,13 @@ scripts/                构建、打包、显式安装及防火墙辅助工具
 
 ### 维护者发布
 
-使用严格的 `v主版本.次版本.修订号` tag（例如 `v0.1.1`）发布稳定版。版本号同时写入 App、Host 和安装程序。
+使用严格的 `v主版本.次版本.修订号` tag（例如 `v0.1.2`）发布稳定版。版本号同时写入 App、Host 和安装程序。
 
 ```powershell
 # 在确认代码及验证结果已提交后执行；不要重用或移动已发布 tag。
 git push origin main
-git tag -a v0.1.1 -m "LanBridge 0.1.1"
-git push origin v0.1.1
+git tag -a v0.1.2 -m "LanBridge 0.1.2"
+git push origin v0.1.2
 ```
 
 GitHub Actions 在 Windows runner 上运行测试、构建、打包，并将安装包、便携包和校验清单上传到同一 Release。构建或测试失败时不会发布正式版。工作流本身使用仓库的 `GITHUB_TOKEN`，不需要额外保存个人令牌。运行结果请以仓库 Actions 页面为准，本地构建成功不等于远程发布成功。

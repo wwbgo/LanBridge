@@ -4,8 +4,11 @@ These checks are dependency-free and do not publish releases or run an installer
 """
 from pathlib import Path
 import hashlib
+import os
 import re
 import subprocess
+import tempfile
+import textwrap
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -35,6 +38,26 @@ class ReleasePackagingTests(unittest.TestCase):
         self.assertIn("if: github.event_name == 'push'", source)
         self.assertIn("permissions:\n      contents: write", source)
         self.assertNotIn("--clobber", source)
+
+    def test_workflow_resolves_main_manual_and_tag_versions(self):
+        source = WORKFLOW.read_text(encoding="utf-8")
+        step = source.split("      - name: Validate tag\n", 1)[1].split("\n      - name:", 1)[0]
+        command = textwrap.dedent(step.split("        run: |\n", 1)[1])
+        props = (ROOT / "Directory.Build.props").read_text(encoding="utf-8")
+        version = re.search(r"<Version>(\d+\.\d+\.\d+)</Version>", props).group(1)
+        for event, ref_type, ref_name, expected_tag, expected_version in (
+            ("push", "branch", "main", "", version),
+            ("workflow_dispatch", "branch", "main", "", version),
+            ("push", "tag", "v1.2.3", "v1.2.3", "1.2.3"),
+        ):
+            with self.subTest(event=event, ref=ref_name), tempfile.TemporaryDirectory(dir=os.environ.get("TMPDIR")) as scratch:
+                env_file = Path(scratch) / "github-env"
+                env = dict(os.environ, EVENT_NAME=event, REF_TYPE=ref_type, REF_NAME=ref_name, GITHUB_ENV=str(env_file))
+                result = subprocess.run(["pwsh", "-NoProfile", "-Command", command], cwd=ROOT, env=env, text=True, capture_output=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                values = dict(line.split("=", 1) for line in env_file.read_text(encoding="utf-8-sig").splitlines())
+                self.assertEqual(values["RELEASE_VERSION"], expected_version)
+                self.assertEqual(values["RELEASE_TAG"], expected_tag)
 
     def test_build_and_package_forward_version_to_both_products(self):
         for name in ("Build.ps1", "Package.ps1", "Package-Single.ps1"):
@@ -83,7 +106,10 @@ class ReleasePackagingTests(unittest.TestCase):
 
     def test_command_line_installer_version_is_not_redefined(self):
         source = (SCRIPTS / "LanBridge.iss").read_text(encoding="utf-8")
-        self.assertRegex(source, r'#ifndef MyAppVersion\s+#define MyAppVersion "0\.1\.1"\s+#endif')
+        props = (ROOT / "Directory.Build.props").read_text(encoding="utf-8")
+        version = re.search(r"<Version>(\d+\.\d+\.\d+)</Version>", props)
+        self.assertIsNotNone(version, "MSBuild must declare a stable product version")
+        self.assertRegex(source, r'#ifndef MyAppVersion\s+#define MyAppVersion "' + re.escape(version.group(1)) + r'"\s+#endif')
 
     def test_package_does_not_copy_repository_sources_into_payload(self):
         source = (SCRIPTS / "Package-Single.ps1").read_text(encoding="utf-8")

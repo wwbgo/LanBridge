@@ -116,7 +116,11 @@ public sealed class ForwardingEngine : IAsyncDisposable
         await gate.WaitAsync().ConfigureAwait(false);
         try
         {
-            if (runtimes.TryGetValue(id, out var runtime)) await runtime.StopAsync().ConfigureAwait(false);
+            if (runtimes.TryGetValue(id, out var runtime))
+            {
+                await runtime.StopAsync().ConfigureAwait(false);
+                runtime.ClearError();
+            }
         }
         finally { gate.Release(); }
     }
@@ -175,6 +179,8 @@ public sealed class ForwardingEngine : IAsyncDisposable
         }
         public RuleStatus Status => new(rule.Id, Volatile.Read(ref running) != 0, Volatile.Read(ref error),
             Volatile.Read(ref active), Interlocked.Read(ref sent), Interlocked.Read(ref received));
+
+        public void ClearError() => Volatile.Write(ref error, null);
 
         public bool OwnsListener(IPEndPoint endpoint, bool useUdp)
         {

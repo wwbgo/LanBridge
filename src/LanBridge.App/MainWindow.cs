@@ -393,7 +393,13 @@ internal sealed partial class MainWindow : Window
             {
                 var row = CreateRow(rule);
                 _list.Items.Add(row);
-                if (selected.Contains(rule.Id)) _list.SelectedItems.Add(row);
+                if (selected.Contains(rule.Id))
+                {
+                    // SelectedItems is read-only in WinUI single-selection mode.
+                    // Writing it throws after the backend has already committed the edit.
+                    if (_list.SelectionMode == ListViewSelectionMode.Single) _list.SelectedItem = row;
+                    else _list.SelectedItems.Add(row);
+                }
             }
             _ruleSignature = signature;
         }
@@ -458,6 +464,11 @@ internal sealed partial class MainWindow : Window
     private void ShowNotice(string title, string message, InfoBarSeverity severity)
     {
         if (_closed) return;
+        if (severity is not (InfoBarSeverity.Warning or InfoBarSeverity.Error))
+        {
+            _notice.IsOpen = false;
+            return;
+        }
         _notice.Title = title; _notice.Message = message; _notice.Severity = severity; _notice.IsOpen = true;
     }
     private async Task MutateAsync(Func<Task> action, string message)
@@ -584,7 +595,11 @@ internal sealed partial class MainWindow : Window
     {
         if (Selected is not { Protocol: TransportProtocol.Tcp } rule || _busy) return;
         await _requests.WaitAsync(_lifetime.Token); SetBusy(true);
-        try { ShowNotice("目标 TCP 测试", UiPresentation.ProbeOutcome(await _client.ProbeAsync(rule, _lifetime.Token)), InfoBarSeverity.Informational); }
+        try
+        {
+            string result = UiPresentation.ProbeOutcome(await _client.ProbeAsync(rule, _lifetime.Token));
+            ShowNotice("目标 TCP 测试", result, UiPresentation.ProbeSucceeded(result) ? InfoBarSeverity.Success : InfoBarSeverity.Warning);
+        }
         catch (OperationCanceledException) when (_closed) { }
         catch (Exception) { ShowNotice("目标 TCP 测试未成功", "请确认目标服务已启动，且目标地址和端口正确。", InfoBarSeverity.Warning); }
         finally { SetBusy(false); _requests.Release(); }
