@@ -2,8 +2,6 @@ name: Build and release
 
 on:
   push:
-    branches:
-      - main
     tags:
       - 'v*'
   workflow_dispatch:
@@ -53,7 +51,7 @@ jobs:
             $version = $Matches.version
             & ./scripts/Release.ps1 -TagName $tag -ValidateOnly
           } else {
-            # Manual runs and pushes to main use the repository's declared product version.
+            # Manual runs use the repository's declared product version.
             $tag = ''
             [xml]$props = Get-Content -Raw -LiteralPath 'Directory.Build.props'
             $version = [string]$props.Project.PropertyGroup.Version

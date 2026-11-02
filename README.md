@@ -121,6 +121,8 @@ git tag -a v0.1.2 -m "LanBridge 0.1.2"
 git push origin v0.1.2
 ```
 
+仅推送 `v*` tag 时自动触发 GitHub Actions；普通分支提交（包括 `main`）不会自动触发。保留手动运行入口，手动运行只验证、构建和打包，不发布 Release。
+
 GitHub Actions 在 Windows runner 上运行测试、构建、打包，并将安装包、便携包和校验清单上传到同一 Release。构建或测试失败时不会发布正式版。工作流本身使用仓库的 `GITHUB_TOKEN`，不需要额外保存个人令牌。运行结果请以仓库 Actions 页面为准，本地构建成功不等于远程发布成功。
 
 ### 应用内检查与升级

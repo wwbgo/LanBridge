@@ -39,6 +39,13 @@ class ReleasePackagingTests(unittest.TestCase):
         self.assertIn("permissions:\n      contents: write", source)
         self.assertNotIn("--clobber", source)
 
+    def test_workflow_automatically_triggers_only_for_version_tags(self):
+        source = WORKFLOW.read_text(encoding="utf-8")
+        triggers = source.split("\non:\n", 1)[1].split("\npermissions:", 1)[0]
+        self.assertNotRegex(triggers, r"(?m)^\s+branches(?:-ignore)?:")
+        self.assertRegex(triggers, r"(?m)^  push:\s*\n    tags:\s*\n      - 'v\*'\s*$")
+        self.assertIn("  workflow_dispatch:", triggers)
+
     def test_workflow_resolves_main_manual_and_tag_versions(self):
         source = WORKFLOW.read_text(encoding="utf-8")
         step = source.split("      - name: Validate tag\n", 1)[1].split("\n      - name:", 1)[0]
